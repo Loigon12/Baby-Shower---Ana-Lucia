@@ -266,6 +266,7 @@
 
         // --- FUNCIONES ADMIN ---
         function openAdmin() {
+            ADMIN_PIN = "1234"; // Cambia este PIN por uno seguro
             const pass = prompt("Introduce el PIN de administrador:");
             if (pass === ADMIN_PIN) {
                 document.getElementById('adminModal').classList.remove('hidden');
@@ -306,6 +307,8 @@
                 docRef.update({ categorias: categories });
             }
         }
+
+
         // --- 6. RELOJ ---
         const eventDate = new Date("March 22, 2026 15:00:00").getTime();
         function updateClock() {
