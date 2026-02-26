@@ -60,7 +60,7 @@
     
     <section class="bg-white py-12 px-4 relative shadow-sm">
         <div class="max-w-4xl mx-auto text-center">
-            <h2 class="font-cursive text-3xl md:text-4xl text-pink-500 mb-8">La reunion es en...</h2>
+            <h2 class="font-cursive text-3xl md:text-4xl text-pink-500 mb-8">La reunión es en...</h2>
             <div class="flex justify-center gap-3 sm:gap-6" id="countdown">
                 <div class="flex flex-col items-center p-3 sm:p-5 bg-pink-50 rounded-2xl border border-pink-100 min-w-[70px] sm:min-w-[100px]">
                     <span class="text-2xl sm:text-4xl font-bold text-pink-600" id="days">00</span>
@@ -128,122 +128,65 @@
         </div>
     </div>
 
-    <footer class="text-center py-12 bg-white/50">
-        <p class="font-cursive text-2xl text-pink-400">¡Te esperamos!</p>
+    <div id="adminModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeAdmin()"></div>
+        <div class="bg-white rounded-[2rem] shadow-2xl p-6 md:p-8 w-full max-w-lg relative z-10 flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h3 class="text-2xl font-cursive text-pink-600">Lista de Invitados</h3>
+                <button onclick="closeAdmin()" class="text-gray-400 hover:text-pink-500 font-bold text-2xl transition-colors">&times;</button>
+            </div>
+            
+            <div class="overflow-y-auto flex-1 pr-2 space-y-3" id="adminList">
+                </div>
+            
+            <div class="mt-6 pt-4 border-t flex justify-between items-center text-sm text-gray-500">
+                <span>Total de regalos reservados:</span>
+                <span id="totalGifts" class="font-bold text-pink-500 text-lg">0</span>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-12 bg-white/50 flex flex-col items-center">
+        <p class="font-cursive text-2xl text-pink-400 mb-4">¡Te esperamos!</p>
+        <button onclick="openAdmin()" class="text-[10px] text-gray-300 hover:text-pink-400 transition-colors uppercase tracking-widest bg-transparent border-none cursor-pointer">
+            Admin Panel
+        </button>
     </footer>
 
     <script>
-        // --- 1. CONFIGURACIÓN DE FIREBASE (REEMPLAZA ESTO) ---
-        const firebaseConfig = {
-  apiKey: "AIzaSyCvBZiaCPJkUfBTTNTZ0Y54cpizSk2uevA",
-  authDomain: "babyshower-analucia.firebaseapp.com",
-  projectId: "babyshower-analucia",
-  storageBucket: "babyshower-analucia.firebasestorage.app",
-  messagingSenderId: "805020853181",
-  appId: "1:805020853181:web:d78b070ae358e056a328d4",
-  measurementId: "G-J8LN85MTVC"
-};
+        // --- 1. CONFIGURACIÓN DE FIREBASE (¡RECUERDA PEGAR TUS CLAVES AQUÍ!) ---
+        const firebaseConfig = 
+        {
+        apiKey: "AIzaSyCvBZiaCPJkUfBTTNTZ0Y54cpizSk2uevA",
+        authDomain: "babyshower-analucia.firebaseapp.com",
+        projectId: "babyshower-analucia",
+        storageBucket: "babyshower-analucia.firebasestorage.app",
+        messagingSenderId: "805020853181",
+        appId: "1:805020853181:web:d78b070ae358e056a328d4",
+        measurementId: "G-J8LN85MTVC"
+    };
 
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const docRef = db.collection("babyshower").doc("listaRegalos");
 
-        // Variable global para usar en la web
         let categories = [];
         let selectedId = null;
 
-        // --- 2. LISTA ORIGINAL (Se usa para inicializar si la base de datos está vacía) ---
-        const defaultCategories = [
-            {
-                name: "Baño y cuidado",
-                items: [
-                    { id: 101, name: "Kit de aseo", max: 2, taken: 0 },
-                    { id: 102, name: "Cambiador", max: 2, taken: 0 },
-                    { id: 103, name: "Pañales etapa 3+", max: -1, taken: 0 },
-                    { id: 104, name: "Toallas", max: 3, taken: 0 },
-                    { id: 105, name: "Termómetro digital", max: 1, taken: 0 },
-                    { id: 106, name: "Botiquín básico", max: 1, taken: 0 },
-                    { id: 107, name: "Organizador de pañales", max: 1, taken: 0 },
-                    { id: 108, name: "Aceite y crema bebé", max: 2, taken: 0 }
-                ]
-            },
-            {
-                name: "Alimentación",
-                items: [
-                    { id: 201, name: "Set teteros anticolicos", max: 2, taken: 0 },
-                    { id: 202, name: "Cepillo para teteros", max: 2, taken: 0 },
-                    { id: 203, name: "Extractor de leche", max: 1, taken: 0 },
-                    { id: 204, name: "Baberos", max: -1, taken: 0 },
-                    { id: 205, name: "Esterilizador teteros", max: 1, taken: 0 },
-                    { id: 206, name: "Escurridor teteros", max: 1, taken: 0 },
-                    { id: 207, name: "Bolsas leche materna", max: 2, taken: 0 }
-                ]
-            },
-            {
-                name: "Ropita",
-                items: [
-                    { id: 301, name: "Semanario 3 meses +", max: -1, taken: 0 },
-                    { id: 302, name: "Primera muda", max: 1, taken: 0 },
-                    { id: 303, name: "Pijamas 6 meses +", max: -1, taken: 0 },
-                    { id: 304, name: "Medias 6 meses +", max: -1, taken: 0 },
-                    { id: 305, name: "Bodies 6 meses +", max: -1, taken: 0 },
-                    { id: 306, name: "Vestido de baño", max: 1, taken: 0 },
-                    { id: 307, name: "Ropa 3 meses +", max: -1, taken: 0 }
-                ]
-            },
-            {
-                name: "Habitación y sueño",
-                items: [
-                    { id: 401, name: "Cobijas", max: -1, taken: 0 },
-                    { id: 402, name: "Cuna", max: 1, taken: 0 },
-                    { id: 408, name: "Colecho", max: 1, taken: 0 }, // Corregido el id repetido 402 a 408
-                    { id: 403, name: "Sábanas ajustables", max: 2, taken: 0 },
-                    { id: 404, name: "Cojín trenzado", max: 2, taken: 0 },
-                    { id: 405, name: "Monitor bebé", max: 1, taken: 0 },
-                    { id: 406, name: "Lámpara ruido blanco", max: 1, taken: 0 }
-                ]
-            },
-            {
-                name: "Paseo y transporte",
-                items: [
-                    { id: 501, name: "Caminador", max: 1, taken: 0 },
-                    { id: 502, name: "Silla para carro", max: 1, taken: 0 },
-                    { id: 503, name: "Fular ergonomico", max: 2, taken: 0 },
-                    { id: 504, name: "Silla comedor", max: 1, taken: 0 },
-                    { id: 505, name: "Pañalera", max: 1, taken: 0 },
-                    { id: 506, name: "Paseador", max: 1, taken: 0 }
-                ]
-            },
-            {
-                name: "Estimulación",
-                items: [
-                    { id: 601, name: "Tapete didáctico", max: 2, taken: 0 },
-                    { id: 602, name: "Gimnasio bebé", max: 1, taken: 0 },
-                    { id: 603, name: "Mordedores", max: 2, taken: 0 },
-                    { id: 604, name: "Chupos", max: 2, taken: 0 },
-                    { id: 605, name: "Juguetes estimulación", max: -1, taken: 0 }
-                ]
-            }
-        ];
-
-        // --- 3. CONEXIÓN EN TIEMPO REAL CON FIREBASE ---
+        // --- 2. CONEXIÓN EN TIEMPO REAL CON FIREBASE ---
         docRef.onSnapshot((doc) => {
             if (doc.exists) {
-                // Si la base de datos existe, la cargamos
                 categories = doc.data().categorias;
                 renderGifts();
-            } else {
-                // Si es la primera vez (base de datos vacía), subimos la lista por defecto
-                docRef.set({ categorias: defaultCategories })
-                    .then(() => {
-                        console.log("¡Base de datos creada y llenada con éxito!");
-                    })
-                    .catch((error) => console.error("Error al crear BD:", error));
+                
+                // ACTUALIZACIÓN EN TIEMPO REAL DEL PANEL ADMIN
+                if (!document.getElementById('adminModal').classList.contains('hidden')) {
+                    renderAdminList();
+                }
             }
         });
 
-        // --- 4. RENDERIZADO ---
+        // --- 3. RENDERIZADO DE REGALOS ---
         function renderGifts() {
             const grid = document.getElementById('giftGrid');
             grid.innerHTML = '';
@@ -279,7 +222,7 @@
             });
         }
 
-        // --- 5. FUNCIONES DEL MODAL ---
+        // --- 4. FUNCIONES DEL MODAL DE RESERVA ---
         function openModal(id, name) {
             selectedId = id;
             document.getElementById('modalGiftName').textContent = name;
@@ -300,18 +243,15 @@
 
             document.getElementById('btnConfirm').innerText = "Guardando...";
 
-            // Buscar y actualizar el regalo localmente
             categories.forEach(c => {
                 const item = c.items.find(i => i.id === selectedId);
                 if(item) {
                     item.taken++;
-                    // Opcional: Guardamos el nombre de quién lo regala
                     if(!item.invitados) item.invitados = [];
-                    item.invitados.push(name);
+                    item.invitados.push(name); // Guardamos el nombre para el panel admin
                 }
             });
 
-            // Enviar la actualización a Firebase
             docRef.update({ categorias: categories })
                 .then(() => {
                     closeModal();
@@ -322,6 +262,55 @@
                     alert("Hubo un error de conexión, por favor intenta nuevamente.");
                     document.getElementById('btnConfirm').innerText = "Confirmar Regalo";
                 });
+        }
+
+        // --- 5. FUNCIONES DEL PANEL DE ADMINISTRADOR (NUEVO) ---
+        function openAdmin() {
+            document.getElementById('adminModal').classList.remove('hidden');
+            renderAdminList();
+        }
+
+        function closeAdmin() {
+            document.getElementById('adminModal').classList.add('hidden');
+        }
+
+        function renderAdminList() {
+            const adminList = document.getElementById('adminList');
+            adminList.innerHTML = '';
+            let totalCounter = 0;
+
+            // Recorremos las categorías y extraemos a los invitados
+            categories.forEach(cat => {
+                cat.items.forEach(item => {
+                    if (item.invitados && item.invitados.length > 0) {
+                        item.invitados.forEach(guestName => {
+                            totalCounter++;
+                            const row = document.createElement('div');
+                            row.className = "flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100";
+                            row.innerHTML = `
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-gray-700 capitalize">${guestName}</span>
+                                    <span class="text-[10px] text-gray-400 uppercase tracking-wider">${cat.name}</span>
+                                </div>
+                                <span class="text-sm font-medium text-pink-600 bg-pink-100 px-3 py-1 rounded-full text-right max-w-[50%] leading-tight">
+                                    ${item.name}
+                                </span>
+                            `;
+                            adminList.appendChild(row);
+                        });
+                    }
+                });
+            });
+
+            document.getElementById('totalGifts').innerText = totalCounter;
+
+            if (totalCounter === 0) {
+                adminList.innerHTML = `
+                    <div class="text-center py-8">
+                        <span class="text-4xl block mb-2">🎁</span>
+                        <p class="text-gray-400 text-sm">Aún no hay regalos reservados.</p>
+                    </div>`;
+            }
         }
 
         // --- 6. RELOJ ---
