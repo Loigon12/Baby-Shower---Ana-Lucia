@@ -160,9 +160,9 @@
                 </div>
 
                 <div class="flex flex-col gap-3">
-                    <button onclick="confirmReservation()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-pink-100 active:scale-95 transition-all order-1">
-                        Confirmar Regalo
-                    </button>
+                   <button id="btnConfirm" onclick="confirmReservation()" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-pink-100 active:scale-95 transition-all order-1">
+    Confirmar Regalo
+</button>
                     <button onclick="closeModal()" class="w-full py-2 text-gray-400 text-sm font-medium order-2">
                         Cancelar
                     </button>
@@ -283,32 +283,35 @@
             document.getElementById('btnConfirm').innerText = "Confirmar Regalo";
         }
 
-        function confirmReservation() {
-            const name = document.getElementById('guestName').value.trim();
-            if(!name) { document.getElementById('nameError').classList.remove('hidden'); return; }
+       function confirmReservation() {
+    const name = document.getElementById('guestName').value.trim();
+    if(!name) { document.getElementById('nameError').classList.remove('hidden'); return; }
 
-            document.getElementById('btnConfirm').innerText = "Guardando...";
+    // Buscamos el botón y si existe, le cambiamos el texto
+    const btn = document.getElementById('btnConfirm');
+    if (btn) btn.innerText = "Guardando...";
 
-            categories.forEach(c => {
-                const item = c.items.find(i => i.id === selectedId);
-                if(item) {
-                    item.taken++;
-                    if(!item.invitados) item.invitados = [];
-                    item.invitados.push(name);
-                }
-            });
-
-            docRef.update({ categorias: categories })
-                .then(() => {
-                    closeModal();
-                    alert(`¡Gracias ${name}! Hemos registrado tu detalle para Ana Lucía.`);
-                })
-                .catch((error) => {
-                    console.error("Error al guardar: ", error);
-                    alert("Hubo un error de conexión, por favor intenta nuevamente.");
-                    document.getElementById('btnConfirm').innerText = "Confirmar Regalo";
-                });
+    categories.forEach(c => {
+        const item = c.items.find(i => i.id === selectedId);
+        if(item) {
+            item.taken++;
+            if(!item.invitados) item.invitados = [];
+            item.invitados.push(name);
         }
+    });
+
+    docRef.update({ categorias: categories })
+        .then(() => {
+            closeModal();
+            alert(`¡Gracias ${name}! Hemos registrado tu detalle para Ana Lucía.`);
+            if (btn) btn.innerText = "Confirmar Regalo"; // Lo regresamos a la normalidad
+        })
+        .catch((error) => {
+            console.error("Error al guardar: ", error);
+            alert("Hubo un error de conexión, por favor intenta nuevamente.");
+            if (btn) btn.innerText = "Confirmar Regalo";
+        });
+}
 
         // --- 5. REGISTRAR REGALO PERSONALIZADO (NUEVA FUNCIÓN) ---
         function registerCustomGift() {
