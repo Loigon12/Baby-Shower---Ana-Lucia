@@ -264,55 +264,48 @@
                 });
         }
 
-        // --- 5. FUNCIONES DEL PANEL DE ADMINISTRADOR (NUEVO) ---
+        // --- FUNCIONES ADMIN ---
         function openAdmin() {
-            document.getElementById('adminModal').classList.remove('hidden');
-            renderAdminList();
-        }
-
-        function closeAdmin() {
-            document.getElementById('adminModal').classList.add('hidden');
-        }
-
-        function renderAdminList() {
-            const adminList = document.getElementById('adminList');
-            adminList.innerHTML = '';
-            let totalCounter = 0;
-
-            // Recorremos las categorías y extraemos a los invitados
-            categories.forEach(cat => {
-                cat.items.forEach(item => {
-                    if (item.invitados && item.invitados.length > 0) {
-                        item.invitados.forEach(guestName => {
-                            totalCounter++;
-                            const row = document.createElement('div');
-                            row.className = "flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100";
-                            row.innerHTML = `
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-gray-700 capitalize">${guestName}</span>
-                                    <span class="text-[10px] text-gray-400 uppercase tracking-wider">${cat.name}</span>
-                                </div>
-                                <span class="text-sm font-medium text-pink-600 bg-pink-100 px-3 py-1 rounded-full text-right max-w-[50%] leading-tight">
-                                    ${item.name}
-                                </span>
-                            `;
-                            adminList.appendChild(row);
-                        });
-                    }
-                });
-            });
-
-            document.getElementById('totalGifts').innerText = totalCounter;
-
-            if (totalCounter === 0) {
-                adminList.innerHTML = `
-                    <div class="text-center py-8">
-                        <span class="text-4xl block mb-2">🎁</span>
-                        <p class="text-gray-400 text-sm">Aún no hay regalos reservados.</p>
-                    </div>`;
+            const pass = prompt("Introduce el PIN de administrador:");
+            if (pass === ADMIN_PIN) {
+                document.getElementById('adminModal').classList.remove('hidden');
+                renderAdminList();
+            } else if (pass !== null) {
+                alert("PIN incorrecto");
             }
         }
 
+        function closeAdmin() { document.getElementById('adminModal').classList.add('hidden'); }
+
+        function renderAdminList() {
+            const list = document.getElementById('adminList');
+            list.innerHTML = '';
+            let total = 0;
+            categories.forEach((cat, cIdx) => {
+                cat.items.forEach((item, iIdx) => {
+                    (item.invitados || []).forEach((guest, gIdx) => {
+                        total++;
+                        list.innerHTML += `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                            <div class="text-xs">
+                                <div class="font-bold text-gray-700">${guest}</div>
+                                <div class="text-pink-400 italic">${item.name}</div>
+                            </div>
+                            <button onclick="deleteRes(${cIdx}, ${iIdx}, ${gIdx})" class="text-red-300 hover:text-red-500 p-2 text-lg">🗑️</button>
+                        </div>`;
+                    });
+                });
+            });
+            document.getElementById('totalGifts').innerText = total;
+        }
+
+        function deleteRes(cIdx, iIdx, gIdx) {
+            if (confirm("¿Eliminar esta reserva?")) {
+                categories[cIdx].items[iIdx].invitados.splice(gIdx, 1);
+                categories[cIdx].items[iIdx].taken--;
+                docRef.update({ categorias: categories });
+            }
+        }
         // --- 6. RELOJ ---
         const eventDate = new Date("March 22, 2026 15:00:00").getTime();
         function updateClock() {
